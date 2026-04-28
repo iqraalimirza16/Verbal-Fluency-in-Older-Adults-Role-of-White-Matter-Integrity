@@ -1,0 +1,90 @@
+# =============================================================================
+# Prepare Dutch psycholinguistic databases for SNAFU
+# =============================================================================
+# Author: Iqra Mirza
+# Thesis: White matter microstructural correlates of verbal fluency metrics
+#         in cognitively healthy older adults (Memolife/ImaLife dataset)
+# Supervisor: Dr. Adrià Rofes, Dr. Sofia Marcolini (UMCG Groningen)
+#
+# This script extracts age of acquisition (AoA) and word frequency values
+# from Dutch psycholinguistic databases and formats them as two-column
+# CSV files (word, value) compatible with SNAFU's wordStat function.
+#
+# Sources:
+#   AoA: Brysbaert et al. (2014). Norms of age of acquisition and
+#        concreteness for 30,000 Dutch words. Acta Psychologica, 150, 80-84.
+#        Supplementary material 2 (31,178 words across multiple studies).
+#        The 'Average' column is used as it has the best coverage (31,161
+#        words after removing Excel errors), combining ratings from
+#        Ghyselinck (2000, 2003), Moors (2013), and Brysbaert (2014).
+#
+#   Frequency: Keuleers, Brysbaert & New (2010). SUBTLEX-NL: A new measure
+#              for Dutch word frequency based on film subtitles.
+#              Behavior Research Methods, 42(3), 643-650.
+#              The 'Zipf' column is used (log-transformed frequency),
+#              as recommended by Adrià Rofes and consistent with the
+#              SUBTLEX-NL documentation.
+#
+# Input files:
+#   1-s2.csv                          : Brysbaert et al. (2014) AoA norms
+#   SUBTLEX-NL_with_pos_and_Zipf.xlsx : SUBTLEX-NL frequency database
+#
+# Output files:
+#   aoa_dutch.csv       : word, AoA value (31,161 words)
+#   frequency_dutch.csv : word, Zipf frequency value (437,501 words)
+# =============================================================================
+
+import pandas as pd
+
+# -----------------------------------------------------------------------------
+# 1. Age of Acquisition (AoA) — Brysbaert et al. (2014)
+# -----------------------------------------------------------------------------
+
+df_aoa = pd.read_csv('1-s2.csv', encoding='latin1')
+
+# Row 0 is a subheader row (contains column labels like 'AoA', '%Known')
+# so we skip it using iloc[1:]
+df_aoa_clean = df_aoa[['Word', 'Average']].iloc[1:].copy()
+df_aoa_clean.columns = ['word', 'value']
+
+# Convert to numeric — removes Excel formula errors (#DIV/0!) present
+# in 16 rows where the average could not be computed
+df_aoa_clean['value'] = pd.to_numeric(df_aoa_clean['value'], errors='coerce')
+
+# Drop rows with missing word or value
+df_aoa_clean = df_aoa_clean.dropna()
+
+print(f'AoA: {len(df_aoa_clean)} words saved')
+print(f'Value range: {df_aoa_clean["value"].min()} to {df_aoa_clean["value"].max()} years')
+
+df_aoa_clean.to_csv('aoa_dutch.csv', index=False)
+
+# -----------------------------------------------------------------------------
+# 2. Word Frequency — SUBTLEX-NL (Keuleers et al., 2010)
+# -----------------------------------------------------------------------------
+
+df_sub = pd.read_excel('SUBTLEX-NL_with_pos_and_Zipf.xlsx')
+
+# Zipf scale: log10 of frequency per billion words
+# A word with Zipf = 6 appears once per thousand words
+# A word with Zipf = 3 appears once per million words
+df_sub_clean = df_sub[['Word', 'Zipf']].dropna()
+df_sub_clean.columns = ['word', 'value']
+
+print(f'Frequency: {len(df_sub_clean)} words saved')
+print(f'Value range: {df_sub_clean["value"].min():.2f} to {df_sub_clean["value"].max():.2f} (Zipf)')
+
+df_sub_clean.to_csv('frequency_dutch.csv', index=False)
+
+# -----------------------------------------------------------------------------
+# How to use in SNAFU:
+# -----------------------------------------------------------------------------
+# import snafu
+# fluencydata = snafu.load_fluency_data('your_data.csv', ...)
+#
+# # Extract mean AoA per participant
+# aoa_scores = snafu.wordStat(fluencydata, database='aoa_dutch.csv')
+#
+# # Extract mean word frequency per participant
+# freq_scores = snafu.wordStat(fluencydata, database='frequency_dutch.csv')
+# -----------------------------------------------------------------------------

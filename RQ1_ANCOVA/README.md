@@ -1,0 +1,1 @@
+This folder contains the R scripts for the RQ1 ANCOVA analyses to examine whether any group differences exist between individuals with high CAC and those with absent CAC on the animal fluency metrics (total number of correctly produced words, mean cluster size, number of switches). 

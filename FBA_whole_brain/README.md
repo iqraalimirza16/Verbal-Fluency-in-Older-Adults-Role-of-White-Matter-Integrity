@@ -1,0 +1,1 @@
+This folder contains the scripts for fixel-based analysis whole brain pipeline based on Meisler & Gabrieli (2022). The analysis was conducted on MRTrix and the scripts were submitted as SLURM job scripts.

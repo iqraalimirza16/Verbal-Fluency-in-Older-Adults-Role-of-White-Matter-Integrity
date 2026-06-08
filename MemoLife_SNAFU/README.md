@@ -1,0 +1,1 @@
+This directory contains the scripts and files used during data preprocessing and cleaning of the animal fluency data from the Memolife study by Marcolini et al. (2026) for use with the SNAFU package by Zemla et al. (2020), using the Dutch animal SANFU scheme developed by Rofes et al. (2020).
